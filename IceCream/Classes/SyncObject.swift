@@ -58,14 +58,14 @@ extension SyncObject: Syncable {
             /// For the very first time when launching, the token will be nil and the server will be giving everything on the Cloud to client
             /// In other situation just get the unarchive the data object
             guard let tokenData = UserDefaults.standard.object(forKey: T.className() + IceCreamKey.zoneChangesTokenKey.value) as? Data else { return nil }
-            return NSKeyedUnarchiver.unarchiveObject(with: tokenData) as? CKServerChangeToken
+            return try? NSKeyedUnarchiver.unarchivedObject(ofClass: CKServerChangeToken.self, from: tokenData)
         }
         set {
             guard let n = newValue else {
                 UserDefaults.standard.removeObject(forKey: T.className() + IceCreamKey.zoneChangesTokenKey.value)
                 return
             }
-            let data = NSKeyedArchiver.archivedData(withRootObject: n)
+            let data = try? NSKeyedArchiver.archivedData(withRootObject: n, requiringSecureCoding: true)
             UserDefaults.standard.set(data, forKey: T.className() + IceCreamKey.zoneChangesTokenKey.value)
         }
     }

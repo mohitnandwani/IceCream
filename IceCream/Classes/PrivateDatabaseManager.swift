@@ -135,7 +135,7 @@ final class PrivateDatabaseManager: DatabaseManager {
     }
     
     private func fetchChangesInZones(_ callback: ((Error?) -> Void)? = nil) {
-        let changesOp = CKFetchRecordZoneChangesOperation(recordZoneIDs: zoneIds, optionsByRecordZoneID: zoneIdOptions)
+        let changesOp = CKFetchRecordZoneChangesOperation(recordZoneIDs: zoneIds, configurationsByRecordZoneID: zoneIdOptions)
         changesOp.fetchAllChanges = true
         
         changesOp.recordZoneChangeTokensUpdatedBlock = { [weak self] zoneId, token, _ in
@@ -202,14 +202,14 @@ extension PrivateDatabaseManager {
             /// For the very first time when launching, the token will be nil and the server will be giving everything on the Cloud to client
             /// In other situation just get the unarchive the data object
             guard let tokenData = UserDefaults.standard.object(forKey: IceCreamKey.databaseChangesTokenKey.value) as? Data else { return nil }
-            return NSKeyedUnarchiver.unarchiveObject(with: tokenData) as? CKServerChangeToken
+            return try? NSKeyedUnarchiver.unarchivedObject(ofClass: CKServerChangeToken.self, from: tokenData)
         }
         set {
             guard let n = newValue else {
                 UserDefaults.standard.removeObject(forKey: IceCreamKey.databaseChangesTokenKey.value)
                 return
             }
-            let data = NSKeyedArchiver.archivedData(withRootObject: n)
+            let data = try? NSKeyedArchiver.archivedData(withRootObject: n, requiringSecureCoding: true)
             UserDefaults.standard.set(data, forKey: IceCreamKey.databaseChangesTokenKey.value)
         }
     }
@@ -228,10 +228,10 @@ extension PrivateDatabaseManager {
         return syncObjects.map { $0.zoneID }
     }
     
-    private var zoneIdOptions: [CKRecordZone.ID: CKFetchRecordZoneChangesOperation.ZoneOptions] {
-        return syncObjects.reduce([CKRecordZone.ID: CKFetchRecordZoneChangesOperation.ZoneOptions]()) { (dict, syncObject) -> [CKRecordZone.ID: CKFetchRecordZoneChangesOperation.ZoneOptions] in
+    private var zoneIdOptions: [CKRecordZone.ID: CKFetchRecordZoneChangesOperation.ZoneConfiguration] {
+        return syncObjects.reduce([CKRecordZone.ID: CKFetchRecordZoneChangesOperation.ZoneConfiguration]()) { (dict, syncObject) -> [CKRecordZone.ID: CKFetchRecordZoneChangesOperation.ZoneConfiguration] in
             var dict = dict
-            let zoneChangesOptions = CKFetchRecordZoneChangesOperation.ZoneOptions()
+            let zoneChangesOptions = CKFetchRecordZoneChangesOperation.ZoneConfiguration()
             zoneChangesOptions.previousServerChangeToken = syncObject.zoneChangesToken
             dict[syncObject.zoneID] = zoneChangesOptions
             return dict

@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "IceCream",
     platforms: [
-        .macOS(.v10_12), .iOS(.v10), .tvOS(.v10), .watchOS(.v3)
+        .macOS(.v10_14), .iOS(.v12), .tvOS(.v12), .watchOS(.v5)
     ],
     products: [
         .library(
@@ -14,7 +14,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/realm/realm-cocoa", 
-            from: "4.1.1"
+            from: "10.5.1"
         )
     ],
     targets: [
